@@ -1,35 +1,61 @@
-version: '3.9'
+version: '3.8'
 
 services:
-  holamundo:
-    build: ./app_holamundo
-    ports:
-      - "8080:80"
-
-  adiosmundo:
-    build: ./app_adiosmundo
-    ports:
-      - "8081:80"
-
-  db:
-    image: mysql:8
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_ROOT_PASSWORD: password
     volumes:
-      - ./scripts/init_db.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./scripts/init_db.sql:/docker-entrypoint-initdb.d/init_db.sql
     ports:
       - "3306:3306"
 
+  holamundo:
+    build:
+      context: ./app_holamundo
+    container_name: app_holamundo
+    restart: unless-stopped
+    depends_on:
+      - mysql
+    environment:
+      DB_HOST: mysql
+      DB_USER: root
+      DB_PASSWORD: password
+      DB_NAME: loginapp
+
+  adiosmundo:
+    build:
+      context: ./app_adiosmundo
+    container_name: app_adiosmundo
+    restart: unless-stopped
+    depends_on:
+      - mysql
+    environment:
+      DB_HOST: mysql
+      DB_USER: root
+      DB_PASSWORD: password
+      DB_NAME: loginapp
+
   apache:
-    image: httpd:2.4
-    volumes:
-      - ./apache/httpd.conf:/usr/local/apache2/conf/httpd.conf
+    build:
+      context: ./apache
+    container_name: apache_reverse
+    restart: unless-stopped
+    depends_on:
+      - holamundo
+      - adiosmundo
     ports:
-      - "8082:80"
+      - "8080:80"
 
   nginx:
-    image: nginx:latest
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+    build:
+      context: ./nginx
+    container_name: nginx_reverse
+    restart: unless-stopped
+    depends_on:
+      - holamundo
+      - adiosmundo
     ports:
-      - "8083:80"
+      - "80:80"
