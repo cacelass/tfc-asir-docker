@@ -1,0 +1,61 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Caches
+*.egg-info/
+.cache/
+.eggs/
+.pytest_cache/
+
+# FastAPI specific
+.env
+.env.*
+*.log
+
+# Distribution / packaging
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg
+
+# Docker
+*.tar
+*.bak
+*.old
+docker-compose.override.yml
+
+# MySQL volumes or dumps
+*.sql
+*.sql.gz
+*.db
+*.pid
+*.sock
+*.cnf
+
+# VS Code
+.vscode/
+
+# OS generated
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Log files
+*.log
+
+# PyCharm
+.idea/
+
+# Backup files
+*~
+*.swp
+*.swo
