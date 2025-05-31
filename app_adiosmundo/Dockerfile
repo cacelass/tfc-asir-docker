@@ -1,17 +1,16 @@
-FROM python:3.9-slim
+# Dockerfile para app_holamundo (similar en app_adiosmundo)
+FROM python:3.9
 
-# Establecer directorio de trabajo
 WORKDIR /app
 
-# Copiar archivos de requerimientos e instalar dependencias
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Instalar dependencias de Python necesarias
+RUN pip install --no-cache-dir fastapi uvicorn sqlalchemy pymysql
 
-# Copiar código de la aplicación
-COPY main.py .
+# Copiar todo el código de la aplicación (incluyendo /static)
+COPY . .
 
-# Exponer el puerto que usará FastAPI
+# Exponer puerto (opcionalmente, según configuración de docker-compose)
 EXPOSE 8000
 
-# Iniciar la aplicación con Uvicorn
+# Comando para ejecutar la aplicación
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

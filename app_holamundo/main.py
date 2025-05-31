@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException, Depends
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
@@ -8,7 +9,7 @@ import os
 app = FastAPI()
 Base = declarative_base()
 
-# Configuración de la base de datos a partir de variables de entorno
+# Configuración de la base de datos
 DB_USER = os.getenv("DB_USER", "root")
 DB_PASSWORD = os.getenv("DB_PASSWORD", "password")
 DB_HOST = os.getenv("DB_HOST", "mysql")
@@ -24,12 +25,10 @@ class Usuario(Base):
     username = Column(String(50), unique=True, index=True, nullable=False)
     password = Column(String(255), nullable=False)
 
-# Modelo Pydantic para la solicitud de login
 class LoginRequest(BaseModel):
     username: str
     password: str
 
-# Dependencia para obtener la sesión de la base de datos
 def get_db():
     db = SessionLocal()
     try:
@@ -37,13 +36,21 @@ def get_db():
     finally:
         db.close()
 
-@app.get("/")
+# Servir archivos estáticos desde la carpeta "static"
+app.mount("/", StaticFiles(directory="static", html=True), name="static")
+
+# Endpoint de login
+@app.post("/login")
+def login(login_req: LoginRequest, db: Session = Depends(get_db)):
+    user = db.query(Usuario).filter(
+        Usuario.username == login_req.username,
+        Usuario.password == login_req.password
+    ).first()
+    if not user:
+        raise HTTPException(status_code=401, detail="Credenciales incorrectas")
+    return {"message": "Inicio de sesión exitoso"}
+
+# Endpoint opcional (puedes quitarlo si ya no lo necesitas)
+@app.get("/api")
 def read_root():
     return {"message": "Hola Mundo - FastAPI con login"}
-
-@app.post("/login")
-def login(request: LoginRequest, db: Session = Depends(get_db)):
-    user = db.query(Usuario).filter(Usuario.username == request.username).first()
-    if not user or user.password != request.password:
-        raise HTTPException(status_code=400, detail="Usuario o contraseña inválidos")
-    return {"message": f"Bienvenido {user.username}!"}
