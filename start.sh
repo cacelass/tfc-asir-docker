@@ -11,7 +11,7 @@ docker run --rm \
     sed -i 's|#LoadModule proxy_http_module|LoadModule proxy_http_module|' /usr/local/apache2/conf/httpd.conf \
   " || true
 
-# 2. Ajustar /etc/hosts en el host (requiere sudo)
+# 2. Ajustar /etc/hosts en el host
 echo ">> Añadiendo entradas a /etc/hosts..."
 HOST1="127.0.0.1 holamundo.local"
 HOST2="127.0.0.1 adiosmundo.local"
