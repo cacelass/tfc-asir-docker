@@ -7,6 +7,9 @@ services:
     restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: tfc_db
+      MYSQL_USER: admin
+      MYSQL_PASSWORD: password
     volumes:
       - ./scripts/init_db.sql:/docker-entrypoint-initdb.d/init_db.sql
     ports:
