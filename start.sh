@@ -5,8 +5,8 @@ set -e
 echo ">> Añadiendo entradas a /etc/hosts..."
 HOST1="127.0.0.1 holamundo.local"
 HOST2="127.0.0.1 adiosmundo.local"
-grep -qF "$HOST1" /etc/hosts || echo "$HOST1" | sudo tee -a /etc/hosts
-grep -qF "$HOST2" /etc/hosts || echo "$HOST2" | sudo tee -a /etc/hosts
+grep -qF "$HOST1" /etc/hosts || echo "$HOST1" | tee -a /etc/hosts
+grep -qF "$HOST2" /etc/hosts || echo "$HOST2" | tee -a /etc/hosts
 
 # 2. Construir y levantar todos los contenedores
 echo ">> Levantando servicios con Docker Compose..."
