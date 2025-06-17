@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Bienvenido</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1 id="mensaje">Cargando...</h1>
+        <p id="usuario"></p>
+    </div>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const tipo = params.get("tipo");
+        const token = localStorage.getItem("access_token");
+
+        const mensajeEl = document.getElementById("mensaje");
+        const usuarioEl = document.getElementById("usuario");
+
+        if (!token) {
+            mensajeEl.textContent = "No autenticado.";
+        } else {
+            let endpoint = "";
+
+            if (tipo === "hola") {
+                endpoint = "/holamundo";
+            } else if (tipo === "adios") {
+                endpoint = "/adiosmundo";
+            } else {
+                mensajeEl.textContent = "Tipo de mensaje no válido.";
+                return;
+            }
+
+            fetch(endpoint, {
+                headers: {
+                    "Authorization": "Bearer " + token
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("Error de autenticación o conexión");
+                }
+                return response.json();
+            })
+            .then(data => {
+                mensajeEl.textContent = data.mensaje;
+                usuarioEl.textContent = `Usuario: ${data.user}`;
+            })
+            .catch(error => {
+                mensajeEl.textContent = error.message;
+            });
+        }
+    </script>
+</body>
+</html>
