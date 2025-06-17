@@ -1,64 +1,45 @@
-version: '3.8'
+version: "3.9"
 
 services:
+
   mysql:
     image: mysql:8.0
-    container_name: mysql
-    restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: password
-      MYSQL_DATABASE: tfc_db
-      MYSQL_USER: admin
-      MYSQL_PASSWORD: password
+      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_DATABASE: appdb
+      MYSQL_USER: user
+      MYSQL_PASSWORD: abc123
     volumes:
-      - ./scripts/init_db.sql:/docker-entrypoint-initdb.d/init_db.sql
+      - mysql_data:/var/lib/mysql
     ports:
       - "3306:3306"
 
-  holamundo:
+  app:
     build:
-      context: ./app_holamundo
-    container_name: app_holamundo
-    restart: unless-stopped
+      context: ./app
+      dockerfile: Dockerfile
     depends_on:
       - mysql
-    environment:
-      DB_HOST: mysql
-      DB_USER: root
-      DB_PASSWORD: password
-      DB_NAME: loginapp
-
-  adiosmundo:
-    build:
-      context: ./app_adiosmundo
-    container_name: app_adiosmundo
-    restart: unless-stopped
-    depends_on:
-      - mysql
-    environment:
-      DB_HOST: mysql
-      DB_USER: root
-      DB_PASSWORD: password
-      DB_NAME: loginapp
+    expose:
+      - "8000"  # FastAPI corre en 8000 dentro del contenedor
 
   apache:
     build:
       context: ./apache
-    container_name: apache_reverse
-    restart: unless-stopped
+      dockerfile: Dockerfile
     depends_on:
-      - holamundo
-      - adiosmundo
+      - app
     ports:
-      - "8080:80"
+      - "8080:8080"  # Apache escucha en 8080
 
   nginx:
     build:
       context: ./nginx
-    container_name: nginx_reverse
-    restart: unless-stopped
+      dockerfile: Dockerfile
     depends_on:
-      - holamundo
-      - adiosmundo
+      - apache
     ports:
       - "80:80"
+
+volumes:
+  mysql_data:
