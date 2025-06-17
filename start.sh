@@ -17,4 +17,4 @@ docker compose up --build -d
 echo ">> Estado de contenedores:"
 docker ps --format "table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}"
 
-echo "¡Todo levantado! Accede a http://holamundo.local:8080 y http://adiosmundo.local:8080"
+echo "¡Todo levantado! Accede a http://holamundo.local:8080/ y http://adiosmundo.local:8080/"
