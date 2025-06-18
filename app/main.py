@@ -1,61 +1,38 @@
-from fastapi import FastAPI, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from passlib.context import CryptContext
-from pydantic import BaseModel
-from typing import Optional
-from fastapi.responses import HTMLResponse
+from fastapi import FastAPI, Form, Depends, Request
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
+from sqlalchemy.orm import Session
+from passlib.context import CryptContext
+from database import SessionLocal, UserDB
 
 app = FastAPI()
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 app.mount("/static", StaticFiles(directory="static"), name="static")
-# Usuario y password (hasheada)
-fake_users_db = {
-    "user": {
-        "username": "user",
-        "hashed_password": pwd_context.hash("abc123"),
-        "disabled": False,
-    }
-}
 
-class User(BaseModel):
-    username: str
-    disabled: Optional[bool] = None
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-class UserInDB(User):
-    hashed_password: str
+# Dependencia para obtener sesión de base de datos
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
-def get_user(db, username: str):
-    if username in db:
-        user_dict = db[username]
-        return UserInDB(**user_dict)
+def get_user_from_db(db: Session, username: str):
+    return db.query(UserDB).filter(UserDB.username == username).first()
 
 def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
 
-def authenticate_user(username: str, password: str):
-    user = get_user(fake_users_db, username)
+def authenticate_user(db: Session, username: str, password: str):
+    user = get_user_from_db(db, username)
     if not user or not verify_password(password, user.hashed_password):
         return None
     return user
 
-@app.post("/token")
-async def login(form_data: OAuth2PasswordRequestForm = Depends()):
-    user = authenticate_user(form_data.username, form_data.password)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Credenciales incorrectas",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    return {"access_token": user.username, "token_type": "bearer"}
-
-async def get_current_user(token: str = Depends(oauth2_scheme)):
-    user = get_user(fake_users_db, token)
-    if not user:
-        raise HTTPException(status_code=401, detail="Token inválido")
-    return user
+def require_login(request: Request):
+    autenticado = request.cookies.get("autenticado")
+    return autenticado == "si"
 
 @app.get("/", response_class=HTMLResponse)
 def root():
@@ -64,12 +41,65 @@ def root():
       <head><title>Inicio</title></head>
       <body>
         <h1>Bienvenido a la API</h1>
-        <p>Usa <a href='/docs'>/docs</a> para ver la documentación interactiva.</p>
+        <p>Usa <a href='/login'>/login</a> para iniciar sesión.</p>
+        <p>O entra a <a href='/holamundo'>/holamundo</a> o <a href='/adiosmundo'>/adiosmundo</a> (requiere login).</p>
       </body>
     </html>
     """
+
+@app.get("/login", response_class=HTMLResponse)
+async def login_form():
+    return """
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <title>Login</title>
+        <link rel="stylesheet" href="/static/style.css">
+    </head>
+    <body>
+        <div class="container">
+            <h1>Login</h1>
+            <form method="post" action="/login">
+                <input type="text" name="username" placeholder="Usuario" required><br><br>
+                <input type="password" name="password" placeholder="Contraseña" required><br><br>
+                <button type="submit">Entrar</button>
+            </form>
+        </div>
+    </body>
+    </html>
+    """
+
+@app.post("/login", response_class=HTMLResponse)
+async def login_post(
+    username: str = Form(...),
+    password: str = Form(...),
+    db: Session = Depends(get_db)
+):
+    user = authenticate_user(db, username, password)
+    if not user:
+        return """
+        <html>
+            <body>
+                <h1>Login</h1>
+                <p style="color:red;">Usuario o contraseña incorrectos.</p>
+                <a href="/login">Volver</a>
+            </body>
+        </html>
+        """
+    response = RedirectResponse(url="/holamundo", status_code=303)
+    response.set_cookie(key="autenticado", value="si", max_age=1800)
+    return response
+
 @app.get("/holamundo", response_class=HTMLResponse)
-async def holamundo():
+async def holamundo(request: Request):
+    if not require_login(request):
+        html = """
+        <script>
+        window.location.href = "/login";
+        </script>
+        """
+        return HTMLResponse(content=html)
     html_content = """
     <!DOCTYPE html>
     <html lang="es">
@@ -82,6 +112,7 @@ async def holamundo():
         <div class="container">
             <h1>Bienvenidos al TFC de Alejandro Cancelas Chapela</h1>
             <p>Curso 2024-2026</p>
+            <a href="/adiosmundo">Ir a despedida</a>
         </div>
     </body>
     </html>
@@ -89,7 +120,14 @@ async def holamundo():
     return HTMLResponse(content=html_content)
 
 @app.get("/adiosmundo", response_class=HTMLResponse)
-async def adiosmundo():
+async def adiosmundo(request: Request):
+    if not require_login(request):
+        html = """
+        <script>
+        window.location.href = "/login";
+        </script>
+        """
+        return HTMLResponse(content=html)
     html_content = """
     <!DOCTYPE html>
     <html lang="es">
@@ -102,6 +140,7 @@ async def adiosmundo():
         <div class="container">
             <h1>Gracias por atender</h1>
             <p>¿Alguna duda?</p>
+            <a href="/holamundo">Volver a bienvenida</a>
         </div>
     </body>
     </html>
