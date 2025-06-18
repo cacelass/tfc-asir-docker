@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 from database import SessionLocal, UserDB
 from passlib.context import CryptContext
 

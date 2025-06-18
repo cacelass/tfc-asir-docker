@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 from fastapi import FastAPI, Form, Depends, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
