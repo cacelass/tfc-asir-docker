@@ -67,10 +67,42 @@ def root():
       </body>
     </html>
     """
-@app.get("/holamundo")
-async def hola_mundo(current_user: User = Depends(get_current_user)):
-    return {"mensaje": "¡Hola Mundo!", "user": current_user.username}
+@app.get("/holamundo", response_class=HTMLResponse)
+async def hola_mundo():
+    html_content = """
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <title>Hola Mundo</title>
+        <link rel="stylesheet" href="/static/style.css">
+    </head>
+    <body>
+        <div class="container">
+            <h1>Bienvenidos al TFC de Alejandro Cancelas Chapela</h1>
+            <p>Curso 2024-2026</p>
+        </div>
+    </body>
+    </html>
+    """
+    return HTMLResponse(content=html_content)
 
 @app.get("/adiosmundo")
-async def adios_mundo(current_user: User = Depends(get_current_user)):
-    return {"mensaje": "¡Adiós Mundo!", "user": current_user.username}
+async def adios_mundo():
+    html_content = """
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <title>Hola Mundo</title>
+        <link rel="stylesheet" href="/static/style.css">
+    </head>
+    <body>
+        <div class="container">
+            <h1>Gracias por atender</h1>
+            <p>Alguna duda?</p>
+        </div>
+    </body>
+    </html>
+    """
+    return HTMLResponse(content=html_content)
