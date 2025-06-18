@@ -1,6 +1,5 @@
 
 services:
-
   mysql:
     image: mysql:8.0
     environment:
@@ -12,6 +11,8 @@ services:
       - mysql_data:/var/lib/mysql
     ports:
       - "3306:3306"
+    networks:
+      - elk-net
 
   app:
     build:
@@ -21,6 +22,8 @@ services:
       - mysql
     expose:
       - "8000"  # FastAPI corre en 8000 dentro del contenedor
+    networks:
+      - elk-net
 
   apache:
     build:
@@ -29,7 +32,9 @@ services:
     depends_on:
       - app
     ports:
-      - "8080:8080"  # Apache escucha en 8080
+      - "8080:8080"
+    networks:
+      - elk-net
 
   nginx:
     build:
@@ -39,6 +44,49 @@ services:
       - apache
     ports:
       - "80:80"
+    networks:
+      - elk-net
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.13.4
+    environment:
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+      - xpack.security.enabled=false
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    mem_limit: 1g
+    ports:
+      - "9200:9200"
+    networks:
+      - elk-net
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.13.4
+    depends_on:
+      - elasticsearch
+    ports:
+      - "5044:5044"
+    networks:
+      - elk-net
+    # Descomenta si tienes tu configuración personalizada:
+    # volumes:
+    #   - ./logstash/config:/usr/share/logstash/pipeline
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.13.4
+    depends_on:
+      - elasticsearch
+    ports:
+      - "5601:5601"
+    networks:
+      - elk-net
 
 volumes:
   mysql_data:
+
+networks:
+  elk-net:
+    driver: bridge

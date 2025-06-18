@@ -10,7 +10,6 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-# Dependencia para obtener sesión de base de datos
 def get_db():
     db = SessionLocal()
     try:
@@ -50,8 +49,7 @@ def root():
 @app.get("/login", response_class=HTMLResponse)
 async def login_form():
     return """
-    <!DOCTYPE html>
-    <html lang="es">
+    <html>
     <head>
         <meta charset="UTF-8">
         <title>Login</title>
@@ -78,17 +76,19 @@ async def login_post(
 ):
     user = authenticate_user(db, username, password)
     if not user:
-        return """
-        <html>
-            <body>
-                <h1>Login</h1>
-                <p style="color:red;">Usuario o contraseña incorrectos.</p>
-                <a href="/login">Volver</a>
-            </body>
-        </html>
-        """
+        return HTMLResponse(
+            """
+            <html>
+                <body>
+                    <h1>Login</h1>
+                    <p style="color:red;">Usuario o contraseña incorrectos.</p>
+                    <a href="/login">Volver</a>
+                </body>
+            </html>
+            """, status_code=401
+        )
     response = RedirectResponse(url="/holamundo", status_code=303)
-    response.set_cookie(key="autenticado", value="si", max_age=1800)
+    response.set_cookie(key="autenticado", value="si", max_age=1800, path="/")
     return response
 
 @app.get("/holamundo", response_class=HTMLResponse)
