@@ -4,11 +4,12 @@ from passlib.context import CryptContext
 from pydantic import BaseModel
 from typing import Optional
 from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
 
 app = FastAPI()
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
-
+app.mount("/static", StaticFiles(directory="static"), name="static")
 # Usuario y password (hasheada)
 fake_users_db = {
     "user": {
@@ -68,7 +69,7 @@ def root():
     </html>
     """
 @app.get("/holamundo", response_class=HTMLResponse)
-async def hola_mundo():
+async def holamundo():
     html_content = """
     <!DOCTYPE html>
     <html lang="es">
@@ -87,20 +88,20 @@ async def hola_mundo():
     """
     return HTMLResponse(content=html_content)
 
-@app.get("/adiosmundo")
-async def adios_mundo():
+@app.get("/adiosmundo", response_class=HTMLResponse)
+async def adiosmundo():
     html_content = """
     <!DOCTYPE html>
     <html lang="es">
     <head>
         <meta charset="UTF-8">
-        <title>Hola Mundo</title>
+        <title>Adiós Mundo</title>
         <link rel="stylesheet" href="/static/style.css">
     </head>
     <body>
         <div class="container">
             <h1>Gracias por atender</h1>
-            <p>Alguna duda?</p>
+            <p>¿Alguna duda?</p>
         </div>
     </body>
     </html>

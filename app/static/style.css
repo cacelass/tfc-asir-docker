@@ -1,21 +1,25 @@
 body {
+    background-color: #f0f4fa;
     font-family: Arial, sans-serif;
-    background-color: #f4f4f4;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
     margin: 0;
+    padding: 0;
 }
-
 .container {
-    background: white;
-    padding: 2rem;
-    border-radius: 10px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    width: 300px;
+    margin: 100px auto;
+    width: 420px;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.08);
+    padding: 32px;
+    text-align: center;
 }
-
+h1 {
+    color: #2176ae;
+}
+p {
+    color: #444;
+    font-size: 1.2em;
+}
 h2 {
     margin-bottom: 1rem;
     text-align: center;
