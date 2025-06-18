@@ -3,6 +3,7 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from passlib.context import CryptContext
 from pydantic import BaseModel
 from typing import Optional
+from fastapi.responses import HTMLResponse
 
 app = FastAPI()
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -55,10 +56,17 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
         raise HTTPException(status_code=401, detail="Token inválido")
     return user
 
-@app.get("/")
+@app.get("/", response_class=HTMLResponse)
 def root():
-    return {"mensaje": "Bienvenido a la API, usa /holamundo o /adiosmundo con token"}
-
+    return """
+    <html>
+      <head><title>Inicio</title></head>
+      <body>
+        <h1>Bienvenido a la API</h1>
+        <p>Usa <a href='/docs'>/docs</a> para ver la documentación interactiva.</p>
+      </body>
+    </html>
+    """
 @app.get("/holamundo")
 async def hola_mundo(current_user: User = Depends(get_current_user)):
     return {"mensaje": "¡Hola Mundo!", "user": current_user.username}
