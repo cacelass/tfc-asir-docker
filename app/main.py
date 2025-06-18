@@ -113,7 +113,7 @@ async def holamundo(request: Request):
         <div class="container">
             <h1>Bienvenidos al TFC de Alejandro Cancelas Chapela</h1>
             <p>Curso 2024-2026</p>
-            <a href="http://adiosmundo.local:8080/adiosmundo">Ir a despedida</a>
+            <a href="/adiosmundo">Ir a despedida</a>
         </div>
     </body>
     </html>
@@ -141,7 +141,7 @@ async def adiosmundo(request: Request):
         <div class="container">
             <h1>Gracias por atender</h1>
             <p>¿Alguna duda?</p>
-            <a href="http://holamundo.local:8080/holamundo">Ir a hola mundo</a>
+            <a href="/holamundo">Ir a hola mundo</a>
         </div>
     </body>
     </html>
