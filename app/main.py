@@ -55,6 +55,10 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
         raise HTTPException(status_code=401, detail="Token inválido")
     return user
 
+@app.get("/")
+def root():
+    return {"mensaje": "Bienvenido a la API, usa /holamundo o /adiosmundo con token"}
+
 @app.get("/holamundo")
 async def hola_mundo(current_user: User = Depends(get_current_user)):
     return {"mensaje": "¡Hola Mundo!", "user": current_user.username}
