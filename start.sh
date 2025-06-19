@@ -6,21 +6,23 @@ echo "1) Linux"
 echo "2) Windows"
 read -rp "Introduce 1 o 2: " SO
 
+HOST_LINE="127.0.0.1 tfc.local"
+
 case "$SO" in
   1)
     echo "Has seleccionado Linux."
-    # Ejemplo: Añadir dominio local a /etc/hosts (Linux)
-    HOST="127.0.0.1 tfc.local"
-    if ! grep -qF "$HOST" /etc/hosts; then
-      echo "$HOST" | sudo tee -a /etc/hosts
+    # Añadir dominio local a /etc/hosts (Linux)
+    if ! grep -qF "$HOST_LINE" /etc/hosts; then
+      echo "$HOST_LINE" >> /etc/hosts
+      echo "Línea añadida a /etc/hosts"
+    else
+      echo "La línea ya existe en /etc/hosts"
     fi
     ;;
   2)
     echo "Has seleccionado Windows."
-    echo "Debes añadir la siguiente línea al archivo C:\\Windows\System32\drivers\etc\hosts (como administrador):"
-    echo "127.0.0.1 tfc.local"
-    echo "Pulsa una tecla cuando lo hayas hecho para continuar..."
-    read -n 1 -s
+    echo "Por favor, ejecuta el archivo start.ps1 desde PowerShell como administrador para continuar en Windows."
+    exit 0
     ;;
   *)
     echo "Opción no válida. Debes introducir 1 o 2."
@@ -38,13 +40,13 @@ docker compose up --build -d
 
 # Esperar a que MySQL esté healthy según healthcheck
 echo ">> Esperando a que MySQL esté completamente preparado..."
-for i in {1..90}; do
+for i in {1..60}; do
   STATUS="$(docker inspect --format='{{.State.Health.Status}}' $(docker compose ps -q mysql) 2>/dev/null || echo "starting")"
   if [ "$STATUS" == "healthy" ]; then
     echo "MySQL está healthy."
     break
   fi
-  echo "Esperando a que MySQL esté healthy... ($i/90) Estado actual: $STATUS"
+  echo "Esperando a que MySQL esté healthy... ($i/60) Estado actual: $STATUS"
   sleep 2
 done
 
