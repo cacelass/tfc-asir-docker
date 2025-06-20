@@ -4,7 +4,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
 # Cambia los valores según tu docker-compose.yml y tus datos reales
-SQLALCHEMY_DATABASE_URL = "mysql+pymysql://root:root@db:3306/tfcdb"
+SQLALCHEMY_DATABASE_URL = "mysql+pymysql://root:root@db:3306/appdb"
 
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

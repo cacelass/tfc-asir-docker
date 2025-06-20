@@ -9,7 +9,7 @@ from database import SessionLocal, UserDB
 app = FastAPI()
 
 # Servir archivos estáticos
-app.mount("/static", StaticFiles(directory="app/static"), name="static")
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Contexto de hash de contraseñas
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
