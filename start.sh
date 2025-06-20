@@ -85,5 +85,4 @@ echo ">> Estado de contenedores:"
 docker ps --format "table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}"
 
 echo "¡Todo levantado! Accede a:"
-echo "  http://tfc.local:8080/holamundo"
-echo "  http://tfc.local:8080/adiosmundo"
+echo "  http://tfc.local"
