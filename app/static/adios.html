@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Adiós Mundo</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1 id="mensaje">Cargando...</h1>
+        <p id="usuario"></p>
+        <a href="/holamundo">Volver a Hola Mundo</a>
+    </div>
+
+    <script>
+        // Suponiendo que el backend devuelve { "mensaje": "¡Adiós, mundo!", "user": "nombreusuario" }
+        fetch("/adiosmundo")
+            .then(async response => {
+                if (!response.ok) {
+                    let msg = "No autenticado o error de conexión";
+                    try {
+                        const data = await response.json();
+                        if (data.detail) msg = data.detail;
+                    } catch {}
+                    throw new Error(msg);
+                }
+                return response.json();
+            })
+            .then(data => {
+                document.getElementById("mensaje").textContent = data.mensaje || "¡Adiós, mundo!";
+                document.getElementById("usuario").textContent = data.user ? `Usuario: ${data.user}` : "";
+            })
+            .catch(error => {
+                document.getElementById("mensaje").textContent = error.message;
+                document.getElementById("usuario").textContent = "";
+            });
+    </script>
+</body>
+</html>

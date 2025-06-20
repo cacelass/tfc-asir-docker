@@ -9,18 +9,31 @@
     <div class="container">
         <h1 id="mensaje">Cargando...</h1>
         <p id="usuario"></p>
+        <a href="?tipo=adios" id="adios-link">Ir a despedida</a>
     </div>
 
     <script>
         const params = new URLSearchParams(window.location.search);
-        const tipo = params.get("tipo");
+        const tipo = params.get("tipo") || "hola";
         const token = localStorage.getItem("access_token");
 
         const mensajeEl = document.getElementById("mensaje");
         const usuarioEl = document.getElementById("usuario");
 
+        function mostrarAdiosLink() {
+            // Solo muestra el enlace si estamos en "hola"
+            const adiosLink = document.getElementById("adios-link");
+            if (tipo === "hola") {
+                adiosLink.style.display = "";
+            } else {
+                adiosLink.style.display = "none";
+            }
+        }
+
         if (!token) {
             mensajeEl.textContent = "No autenticado.";
+            usuarioEl.textContent = "";
+            mostrarAdiosLink();
         } else {
             let endpoint = "";
 
@@ -30,6 +43,8 @@
                 endpoint = "/adiosmundo";
             } else {
                 mensajeEl.textContent = "Tipo de mensaje no válido.";
+                usuarioEl.textContent = "";
+                mostrarAdiosLink();
                 return;
             }
 
@@ -38,20 +53,30 @@
                     "Authorization": "Bearer " + token
                 }
             })
-            .then(response => {
+            .then(async response => {
                 if (!response.ok) {
-                    throw new Error("Error de autenticación o conexión");
+                    let msg = "Error de autenticación o conexión";
+                    try {
+                        const data = await response.json();
+                        if (data.detail) msg = data.detail;
+                    } catch {}
+                    throw new Error(msg);
                 }
                 return response.json();
             })
             .then(data => {
-                mensajeEl.textContent = data.mensaje;
-                usuarioEl.textContent = `Usuario: ${data.user}`;
+                mensajeEl.textContent = data.mensaje || "¡Bienvenido!";
+                usuarioEl.textContent = data.user ? `Usuario: ${data.user}` : "";
+                mostrarAdiosLink();
             })
             .catch(error => {
                 mensajeEl.textContent = error.message;
+                usuarioEl.textContent = "";
+                mostrarAdiosLink();
             });
         }
+
+        mostrarAdiosLink();
     </script>
 </body>
 </html>
