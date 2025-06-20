@@ -62,6 +62,7 @@ def hola_mundo(
         }, headers={"Content-Type": "application/json; charset=utf-8"})
     provincia_user = user.provincia or "Desconocida"
     foto_perfil = user.foto_perfil or ""
+    foto_perfil = f"/static/fotos/{user.foto_perfil}" if user.foto_perfil else ""
     edad = user.edad if user.edad is not None else ""
     tiempo_actual = "No disponible"
     nombre_provincia = provincia_user

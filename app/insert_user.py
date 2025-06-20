@@ -8,7 +8,7 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 username = "user"
 password = "abc123"
 provincia = "Pontevedra"
-foto_perfil = "/app/foto_perfil.jpg"
+foto_perfil = "/app/static/foto_perfil.jpg"
 edad = 25
 
 db = SessionLocal()
