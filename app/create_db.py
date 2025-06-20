@@ -3,7 +3,7 @@ from database import Base, engine
 from sqlalchemy import create_engine
 
 # Ajusta esta cadena según tu configuración real de usuario, contraseña, host y base de datos
-SQLALCHEMY_DATABASE_URL = "mysql+pymysql://user:abc123@db:3306/appdb"
+SQLALCHEMY_DATABASE_URL = "mysql+pymysql://user:abc123@mysql:3306/appdb"
 
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 
