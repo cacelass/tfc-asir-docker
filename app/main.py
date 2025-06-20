@@ -58,18 +58,21 @@ def hola_mundo(
             "foto_perfil": "",
             "tiempo": "No disponible",
             "bienvenida": "Bienvenidos al TFC de Alejandro Cancelas"
-        })
+        }, headers={"Content-Type": "application/json; charset=utf-8"})
     provincia_user = user.provincia or "Desconocida"
     foto_perfil = user.foto_perfil or ""
     tiempo_actual = "No disponible"
     nombre_provincia = provincia_user
     try:
         resp = requests.get("https://www.el-tiempo.net/api/json/v2/provincias")
+        resp.encoding = 'utf-8'  # <-- Importante: Forzar UTF-8
         lista = resp.json()["provincias"]
         provincia_obj = next((p for p in lista if p["NOMBRE_PROVINCIA"].lower() == provincia_user.lower()), None)
         if provincia_obj:
             codprov = provincia_obj["CODPROV"]
-            detalle = requests.get(f"https://www.el-tiempo.net/api/json/v2/provincias/{codprov}").json()
+            detalle_resp = requests.get(f"https://www.el-tiempo.net/api/json/v2/provincias/{codprov}")
+            detalle_resp.encoding = 'utf-8'  # <-- Importante: Forzar UTF-8 también aquí
+            detalle = detalle_resp.json()
             tiempo_actual = detalle['today']['p']
             nombre_provincia = provincia_obj["NOMBRE_PROVINCIA"]
     except Exception:
@@ -80,10 +83,10 @@ def hola_mundo(
         "foto_perfil": foto_perfil,
         "tiempo": tiempo_actual,
         "bienvenida": "Bienvenidos al TFC de Alejandro Cancelas"
-    })
+    }, headers={"Content-Type": "application/json; charset=utf-8"})
 
 @app.get("/adiosmundo")
 def adios_mundo(autenticado: str = Header("")):
     if autenticado != "si":
         raise HTTPException(status_code=401, detail="No autenticado")
-    return JSONResponse({"msg": "¡Adiós mundo!"})
+    return JSONResponse({"msg": "¡Adiós mundo!"}, headers={"Content-Type": "application/json; charset=utf-8"})
