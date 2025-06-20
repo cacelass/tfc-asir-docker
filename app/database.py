@@ -3,7 +3,8 @@ from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-SQLALCHEMY_DATABASE_URL = "mysql+pymysql://user:abc123@mysql:3306/appdb"
+# Cambia los valores según tu docker-compose.yml y tus datos reales
+SQLALCHEMY_DATABASE_URL = "mysql+pymysql://root:root@db:3306/tfcdb"
 
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -14,3 +15,6 @@ class UserDB(Base):
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String(50), unique=True, index=True, nullable=False)
     hashed_password = Column(String(128), nullable=False)
+
+if __name__ == "__main__":
+    Base.metadata.create_all(bind=engine)

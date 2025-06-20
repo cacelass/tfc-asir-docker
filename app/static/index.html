@@ -1,25 +1,129 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Login</title>
-    <link rel="stylesheet" href="/static/styles.css">
+    <title>Frontend TFC ASIR Docker</title>
+    <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
     <div class="container">
-        <h2>Iniciar Sesión</h2>
-        <form id="login-form">
+        <h1>TFC ASIR - Demo Frontend</h1>
+        <nav>
+            <button id="showLogin" class="active">Login</button>
+            <button id="showHola">Hola Mundo</button>
+            <button id="showAdios">Adiós Mundo</button>
+        </nav>
+        <form id="loginForm">
             <label for="username">Usuario:</label>
-            <input type="text" id="username" name="username" required>
-
+            <input type="text" id="username" required autocomplete="username">
             <label for="password">Contraseña:</label>
-            <input type="password" id="password" name="password" required>
-
-            <button type="submit">Entrar</button>
+            <input type="password" id="password" required autocomplete="current-password">
+            <button type="submit" id="loginBtn">Entrar</button>
         </form>
-        <div id="message"></div>
+        <div id="privateActions" style="display:none;">
+            <button id="logoutBtn" class="logout">Cerrar sesión</button>
+        </div>
+        <div class="output" id="output"></div>
     </div>
-    <script src="/static/login.js"></script>
+    <script>
+        let autenticado = false;
+        const showLogin = document.getElementById('showLogin');
+        const showHola = document.getElementById('showHola');
+        const showAdios = document.getElementById('showAdios');
+        const loginForm = document.getElementById('loginForm');
+        const privateActions = document.getElementById('privateActions');
+        const output = document.getElementById('output');
+        const logoutBtn = document.getElementById('logoutBtn');
+
+        function setSection(section) {
+            showLogin.classList.remove('active');
+            showHola.classList.remove('active');
+            showAdios.classList.remove('active');
+            loginForm.style.display = 'none';
+            output.innerHTML = '';
+            if (section === 'login') {
+                showLogin.classList.add('active');
+                loginForm.style.display = '';
+                privateActions.style.display = autenticado ? '' : 'none';
+            } else if (section === 'hola') {
+                showHola.classList.add('active');
+                loginForm.style.display = 'none';
+                fetchHola();
+            } else if (section === 'adios') {
+                showAdios.classList.add('active');
+                loginForm.style.display = 'none';
+                fetchAdios();
+            }
+        }
+        showLogin.onclick = () => setSection('login');
+        showHola.onclick = () => setSection('hola');
+        showAdios.onclick = () => setSection('adios');
+
+        loginForm.onsubmit = async function(e) {
+            e.preventDefault();
+            output.innerHTML = '';
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const formData = new FormData();
+            formData.append("username", username);
+            formData.append("password", password);
+
+            try {
+                const res = await fetch('/login', { method: 'POST', body: formData });
+                const data = await res.json();
+                if (res.ok) {
+                    autenticado = true;
+                    output.innerHTML = '<b>Login correcto.</b>';
+                    privateActions.style.display = '';
+                } else {
+                    autenticado = false;
+                    output.innerHTML = `<span class="error">${data.detail || "Login incorrecto"}</span>`;
+                }
+            } catch (err) {
+                output.innerHTML = `<span class="error">Error de conexión con el servidor.</span>`;
+            }
+        };
+
+        logoutBtn.onclick = function() {
+            autenticado = false;
+            output.innerHTML = "Sesión cerrada.";
+            privateActions.style.display = 'none';
+            setSection('login');
+        };
+
+        async function fetchHola() {
+            output.innerHTML = 'Cargando...';
+            try {
+                const res = await fetch('/holamundo', {
+                    headers: { 'autenticado': autenticado ? 'si' : '' }
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    output.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                } else {
+                    output.innerHTML = `<span class="error">${data.detail || "Acceso denegado"}</span>`;
+                }
+            } catch (err) {
+                output.innerHTML = `<span class="error">No se pudo conectar con el backend.</span>`;
+            }
+        }
+        async function fetchAdios() {
+            output.innerHTML = 'Cargando...';
+            try {
+                const res = await fetch('/adiosmundo', {
+                    headers: { 'autenticado': autenticado ? 'si' : '' }
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    output.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                } else {
+                    output.innerHTML = `<span class="error">${data.detail || "Acceso denegado"}</span>`;
+                }
+            } catch (err) {
+                output.innerHTML = `<span class="error">No se pudo conectar con el backend.</span>`;
+            }
+        }
+        setSection('login');
+    </script>
 </body>
 </html>
