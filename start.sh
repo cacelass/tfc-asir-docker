@@ -86,3 +86,7 @@ docker ps --format "table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}"
 
 echo "¡Todo levantado! Accede a:"
 echo "  http://tfc.local"
+
+echo "¡Para acceder a swagger acceda a:"
+echo "  http://tfc.local/8000"
+
