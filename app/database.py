@@ -15,6 +15,8 @@ class UserDB(Base):
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String(50), unique=True, index=True, nullable=False)
     hashed_password = Column(String(128), nullable=False)
-
+    provincia = Column(String(50), nullable=True)
+    foto_perfil = Column(String(300), nullable=True)
+    edad = Column(Integer, nullable=True)
 if __name__ == "__main__":
     Base.metadata.create_all(bind=engine)

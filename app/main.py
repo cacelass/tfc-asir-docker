@@ -1,20 +1,19 @@
 #!/usr/bin/env python3
 from fastapi import FastAPI, Form, Depends, Header, HTTPException, Request
-from fastapi.responses import HTMLResponse, FileResponse, PlainTextResponse, JSONResponse
+from fastapi.responses import HTMLResponse, FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 from passlib.context import CryptContext
 from database import SessionLocal, UserDB
+import requests
 
 app = FastAPI()
 
 # Servir archivos estáticos
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# Contexto de hash de contraseñas
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-# Dependencia para la sesión de base de datos
 def get_db():
     db = SessionLocal()
     try:
@@ -22,15 +21,12 @@ def get_db():
     finally:
         db.close()
 
-# Página principal (frontend)
 @app.get("/", response_class=HTMLResponse)
 async def root():
     return FileResponse("static/index.html")
 
-# Login usando JSON desde frontend moderno
 @app.post("/login")
 async def login(request: Request, db: Session = Depends(get_db)):
-    # Permitir tanto JSON como formulario
     if request.headers.get("content-type", "").startswith("application/json"):
         data = await request.json()
         username = data.get("username")
@@ -42,18 +38,52 @@ async def login(request: Request, db: Session = Depends(get_db)):
     user = db.query(UserDB).filter(UserDB.username == username).first()
     if not user or not pwd_context.verify(password, user.hashed_password):
         return JSONResponse({"autenticado": "no"})
-    # El frontend espera autenticado: si y el usuario
     return JSONResponse({"autenticado": "si", "usuario": username})
 
-# Endpoints protegidos, devuelven texto plano para el frontend
 @app.get("/holamundo")
-def hola_mundo(autenticado: str = Header("")):
+def hola_mundo(
+    autenticado: str = Header(""),
+    usuario: str = Header(None), 
+    db: Session = Depends(get_db)
+):
     if autenticado != "si":
         raise HTTPException(status_code=401, detail="No autenticado")
-    return PlainTextResponse("¡Hola mundo!")
+    if usuario is None:
+        raise HTTPException(status_code=400, detail="Falta el usuario en el header")
+    user = db.query(UserDB).filter(UserDB.username == usuario).first()
+    if not user:
+        return JSONResponse({
+            "usuario": usuario,
+            "provincia": "Desconocida",
+            "foto_perfil": "",
+            "tiempo": "No disponible",
+            "bienvenida": "Bienvenidos al TFC de Alejandro Cancelas"
+        })
+    provincia_user = user.provincia or "Desconocida"
+    foto_perfil = user.foto_perfil or ""
+    tiempo_actual = "No disponible"
+    nombre_provincia = provincia_user
+    try:
+        resp = requests.get("https://www.el-tiempo.net/api/json/v2/provincias")
+        lista = resp.json()["provincias"]
+        provincia_obj = next((p for p in lista if p["NOMBRE_PROVINCIA"].lower() == provincia_user.lower()), None)
+        if provincia_obj:
+            codprov = provincia_obj["CODPROV"]
+            detalle = requests.get(f"https://www.el-tiempo.net/api/json/v2/provincias/{codprov}").json()
+            tiempo_actual = detalle['today']['p']
+            nombre_provincia = provincia_obj["NOMBRE_PROVINCIA"]
+    except Exception:
+        pass
+    return JSONResponse({
+        "usuario": user.username,
+        "provincia": nombre_provincia,
+        "foto_perfil": foto_perfil,
+        "tiempo": tiempo_actual,
+        "bienvenida": "Bienvenidos al TFC de Alejandro Cancelas"
+    })
 
 @app.get("/adiosmundo")
 def adios_mundo(autenticado: str = Header("")):
     if autenticado != "si":
         raise HTTPException(status_code=401, detail="No autenticado")
-    return PlainTextResponse("¡Adiós mundo!")
+    return JSONResponse({"msg": "¡Adiós mundo!"})

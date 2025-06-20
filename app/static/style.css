@@ -20,7 +20,6 @@ body {
     letter-spacing: 1px;
 }
 
-/* Centrar y limitar el ancho del formulario */
 #login-form {
     display: flex;
     flex-direction: column;
@@ -80,7 +79,6 @@ body {
     background: #2231bf;
 }
 
-/* Secciones principales */
 #hola-section, #adios-section {
     max-width: 360px;
     width: 100%;

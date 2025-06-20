@@ -4,9 +4,22 @@ from passlib.context import CryptContext
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
+# Cambia los valores según tus necesidades
+username = "user"
+password = "abc123"
+provincia = "Pontevedra"
+foto_perfil = "https://miavatar.com/user.png"
+edad = 25
+
 db = SessionLocal()
-hashed = pwd_context.hash("abc123")
-user = UserDB(username="user", hashed_password=hashed)
+hashed = pwd_context.hash(password)
+user = UserDB(
+    username=username,
+    hashed_password=hashed,
+    provincia=provincia,
+    foto_perfil=foto_perfil,
+    edad=edad
+)
 db.add(user)
 db.commit()
 db.close()

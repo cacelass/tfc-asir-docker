@@ -93,6 +93,28 @@
 
         // Por si recargas y hay que mostrar login por defecto
         mostrarLogin();
+	function mostrarHola() {
+    holaSection.style.display = 'block';
+    adiosSection.style.display = 'none';
+    fetch('/holamundo', {
+        headers: {
+            'autenticado': 'si',
+            'usuario': usuario
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        holaSection.innerHTML = `
+            <h2>${data.bienvenida}</h2>
+            <p>Bienvenido, ${data.usuario}!</p>
+            <img src="${data.foto_perfil}" alt="Foto de perfil" style="width:100px;height:100px;border-radius:50%;object-fit:cover;margin-bottom:1rem;">
+            <p><b>Provincia:</b> ${data.provincia}</p>
+            <p><b>Tiempo actual:</b> ${data.tiempo}</p>
+            <button id="ir-adios">Ir a Adiós mundo</button>
+        `;
+        document.getElementById('ir-adios').onclick = mostrarAdios;
+    });
+}
     </script>
 </body>
 </html>
