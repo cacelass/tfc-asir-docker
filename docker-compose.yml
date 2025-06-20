@@ -25,7 +25,7 @@ services:
     depends_on:
       - mysql
     expose:
-      - "8000"  # FastAPI corre en 8000 dentro del contenedor
+      - "8000"
     networks:
       - elk-net
 
@@ -35,8 +35,6 @@ services:
       dockerfile: Dockerfile
     depends_on:
       - app
-    ports:
-      - "8080:8080"
     networks:
       - elk-net
 
@@ -75,9 +73,6 @@ services:
       - "5044:5044"
     networks:
       - elk-net
-    # Descomenta si tienes tu configuración personalizada:
-    # volumes:
-    #   - ./logstash/config:/usr/share/logstash/pipeline
 
   kibana:
     image: docker.elastic.co/kibana/kibana:8.13.4

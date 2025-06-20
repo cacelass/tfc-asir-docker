@@ -107,8 +107,9 @@
         holaSection.innerHTML = `
             <h2>${data.bienvenida}</h2>
             <p>Bienvenido, ${data.usuario}!</p>
-            <img src="${data.foto_perfil}" alt="Foto de perfil" style="width:100px;height:100px;border-radius:50%;object-fit:cover;margin-bottom:1rem;">
             <p><b>Provincia:</b> ${data.provincia}</p>
+	    <img src="${data.foto_perfil}" alt="Foto de perfil" style="width:100px;height:100px;border-radius:50%;object-fit:cover;margin-bottom:1rem;">
+	    <p><b>Edad:</b> ${data.edad}</p>
             <p><b>Tiempo actual:</b> ${data.tiempo}</p>
             <button id="ir-adios">Ir a Adiós mundo</button>
         `;

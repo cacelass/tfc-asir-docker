@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from passlib.context import CryptContext
 from database import SessionLocal, UserDB
 import requests
+from datetime import date
 
 app = FastAPI()
 
@@ -39,7 +40,6 @@ async def login(request: Request, db: Session = Depends(get_db)):
     if not user or not pwd_context.verify(password, user.hashed_password):
         return JSONResponse({"autenticado": "no"})
     return JSONResponse({"autenticado": "si", "usuario": username})
-
 @app.get("/holamundo")
 def hola_mundo(
     autenticado: str = Header(""),
@@ -56,22 +56,24 @@ def hola_mundo(
             "usuario": usuario,
             "provincia": "Desconocida",
             "foto_perfil": "",
+            "edad": "",
             "tiempo": "No disponible",
             "bienvenida": "Bienvenidos al TFC de Alejandro Cancelas"
         }, headers={"Content-Type": "application/json; charset=utf-8"})
     provincia_user = user.provincia or "Desconocida"
     foto_perfil = user.foto_perfil or ""
+    edad = user.edad if user.edad is not None else ""
     tiempo_actual = "No disponible"
     nombre_provincia = provincia_user
     try:
         resp = requests.get("https://www.el-tiempo.net/api/json/v2/provincias")
-        resp.encoding = 'utf-8'  # <-- Importante: Forzar UTF-8
+        resp.encoding = 'utf-8'
         lista = resp.json()["provincias"]
         provincia_obj = next((p for p in lista if p["NOMBRE_PROVINCIA"].lower() == provincia_user.lower()), None)
         if provincia_obj:
             codprov = provincia_obj["CODPROV"]
             detalle_resp = requests.get(f"https://www.el-tiempo.net/api/json/v2/provincias/{codprov}")
-            detalle_resp.encoding = 'utf-8'  # <-- Importante: Forzar UTF-8 también aquí
+            detalle_resp.encoding = 'utf-8'
             detalle = detalle_resp.json()
             tiempo_actual = detalle['today']['p']
             nombre_provincia = provincia_obj["NOMBRE_PROVINCIA"]
@@ -81,6 +83,7 @@ def hola_mundo(
         "usuario": user.username,
         "provincia": nombre_provincia,
         "foto_perfil": foto_perfil,
+        "edad": edad,
         "tiempo": tiempo_actual,
         "bienvenida": "Bienvenidos al TFC de Alejandro Cancelas"
     }, headers={"Content-Type": "application/json; charset=utf-8"})
