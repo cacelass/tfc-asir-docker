@@ -25,7 +25,7 @@ def get_db():
 # Página principal (frontend)
 @app.get("/", response_class=HTMLResponse)
 async def root():
-    return FileResponse("app/static/index.html")
+    return FileResponse("static/index.html")
 
 # Login usando JSON desde frontend moderno
 @app.post("/login")

@@ -3,32 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <title>TFC Alejandro</title>
-    <style>
-        body { font-family: sans-serif; }
-        #contenido, #hola-section, #adios-section { display: none; }
-    </style>
+    <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-    <h1>Login simple</h1>
+    <h1 id="login-title">Login simple</h1>
     <form id="login-form">
         <input type="text" id="username" placeholder="Usuario" required>
         <input type="password" id="password" placeholder="Contraseña" required>
         <button type="submit">Entrar</button>
     </form>
-    <div id="contenido">
-        <p>Bienvenido, <span id="usuario-logeado"></span>!</p>
-        <button id="hola-btn">Hola mundo</button>
-    </div>
-    <div id="hola-section"></div>
-    <div id="adios-section"></div>
+    <div id="hola-section" style="display:none;"></div>
+    <div id="adios-section" style="display:none;"></div>
     <script>
         let usuario = "";
 
+        const loginTitle = document.getElementById('login-title');
         const loginForm = document.getElementById('login-form');
-        const contenido = document.getElementById('contenido');
-        const usuarioLogeado = document.getElementById('usuario-logeado');
         const holaSection = document.getElementById('hola-section');
         const adiosSection = document.getElementById('adios-section');
+
+        // Mostrar login y título
+        function mostrarLogin() {
+            loginForm.reset();
+            loginTitle.style.display = 'block';
+            loginForm.style.display = 'block';
+            holaSection.style.display = 'none';
+            adiosSection.style.display = 'none';
+            usuario = "";
+        }
+
+        // Ocultar login y título
+        function ocultarLogin() {
+            loginTitle.style.display = 'none';
+            loginForm.style.display = 'none';
+        }
+
+        // Mostrar la pantalla principal (hola)
+        function mostrarHola() {
+            holaSection.style.display = 'block';
+            adiosSection.style.display = 'none';
+            fetch('/holamundo', { headers: { 'autenticado': 'si' } })
+                .then(res => res.text())
+                .then(msg => {
+                    holaSection.innerHTML = `
+                        <h2>Hola mundo</h2>
+                        <p>Bienvenido, <span id="usuario-logeado"></span>!</p>
+                        <p>${msg}</p>
+                        <button id="ir-adios">Ir a Adiós mundo</button>
+                    `;
+                    document.getElementById('usuario-logeado').textContent = usuario;
+                    document.getElementById('ir-adios').onclick = mostrarAdios;
+                });
+        }
+
+        function mostrarAdios() {
+            holaSection.style.display = 'none';
+            adiosSection.style.display = 'block';
+            fetch('/adiosmundo', { headers: { 'autenticado': 'si' } })
+                .then(res => res.text())
+                .then(adiosMsg => {
+                    adiosSection.innerHTML = `
+                        <h2>¿Seguro que quiere salir, <span id="nombre-usuario"></span>?</h2>
+                        <button id="logout-btn">Desloguearse</button>
+                    `;
+                    document.getElementById('nombre-usuario').textContent = usuario;
+                    document.getElementById('logout-btn').onclick = mostrarLogin;
+                });
+        }
 
         loginForm.addEventListener('submit', function(e) {
             e.preventDefault();
@@ -42,49 +83,16 @@
             .then(res => res.json())
             .then(data => {
                 if (data.autenticado === 'si') {
-                    loginForm.style.display = 'none';
-                    contenido.style.display = 'block';
-                    usuarioLogeado.textContent = usuario;
+                    ocultarLogin();
+                    mostrarHola();
                 } else {
                     alert('Usuario o contraseña incorrectos');
                 }
             });
         });
 
-        document.getElementById('hola-btn').addEventListener('click', function() {
-            // Oculta menú, muestra la sección hola
-            contenido.style.display = 'none';
-            adiosSection.style.display = 'none';
-            holaSection.style.display = 'block';
-            fetch('/holamundo', { headers: { 'autenticado': 'si' } })
-                .then(res => res.text())
-                .then(msg => {
-                    holaSection.innerHTML = `
-                        <h2>Hola mundo</h2>
-                        <p>${msg}</p>
-                        <button id="ir-adios">Ir a Adiós mundo</button>
-                    `;
-                    document.getElementById('ir-adios').onclick = () => {
-                        holaSection.style.display = 'none';
-                        adiosSection.style.display = 'block';
-                        // Llama a /adiosmundo y muestra la pregunta
-                        fetch('/adiosmundo', { headers: { 'autenticado': 'si' } })
-                            .then(res => res.text())
-                            .then(adiosMsg => {
-                                adiosSection.innerHTML = `
-                                    <h2>¿Seguro que quiere salir, <span id="nombre-usuario"></span>?</h2>
-                                    <p>${adiosMsg}</p>
-                                    <button id="volver-menu">No, volver</button>
-                                `;
-                                document.getElementById('nombre-usuario').textContent = usuario;
-                                document.getElementById('volver-menu').onclick = () => {
-                                    adiosSection.style.display = 'none';
-                                    contenido.style.display = 'block';
-                                }
-                            });
-                    };
-                });
-        });
+        // Por si recargas y hay que mostrar login por defecto
+        mostrarLogin();
     </script>
 </body>
 </html>
