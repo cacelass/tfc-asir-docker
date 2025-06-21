@@ -176,7 +176,7 @@ def hola_mundo(
         user_concello_norm = normaliza(user.concello)
         provincia_user_norm = normaliza(provincia_user)
 
-        print(f"Usuario -> Concello normalizado: '{user_concello_norm}', Provincia normalizada: '{provincia_user_norm}'")
+        #print(f"Usuario -> Concello normalizado: '{user_concello_norm}', Provincia normalizada: '{provincia_user_norm}'")
 
         # 1. Busca por concello exacto, normalizado
         for e in estaciones:

@@ -66,7 +66,7 @@ function mostrarHola() {
             <p><b>Edad:</b> ${data.edad}</p>
             <p><b>Tiempo actual:</b> <span id="valor-tiempo">${data.tiempo}</span></p>
             <div>${meteoHtml}</div>
-            <button id="ir-adios">Ir a Adiós mundo</button>
+            <button id="ir-adios">Salir</button>
         `;
         document.getElementById('ir-adios').onclick = mostrarAdios;
 
@@ -116,9 +116,14 @@ function mostrarAdios() {
             adiosSection.innerHTML = `
                 <h2>¿Seguro que quiere salir, <span id="nombre-usuario"></span>?</h2>
                 <button id="logout-btn">Desloguearse</button>
-            `;
+                <button id="back-btn">Volver</button> `;
             document.getElementById('nombre-usuario').textContent = usuario;
             document.getElementById('logout-btn').onclick = mostrarLogin;
+            // Lógica para el botón "Volver"
+            document.getElementById('back-btn').onclick = function() {
+                adiosSection.style.display = 'none'; // Oculta la sección de despedida
+                holaSection.style.display = 'block'; // Muestra la sección de bienvenida (o la anterior)
+            };
         });
 }
 
