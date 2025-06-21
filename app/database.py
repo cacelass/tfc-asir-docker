@@ -16,7 +16,9 @@ class UserDB(Base):
     username = Column(String(50), unique=True, index=True, nullable=False)
     hashed_password = Column(String(128), nullable=False)
     provincia = Column(String(50), nullable=True)
+    concello = Column(String(50), nullable=True)  # <-- Añadido este campo
     foto_perfil = Column(String(300), nullable=True)
     edad = Column(Integer, nullable=True)
+
 if __name__ == "__main__":
     Base.metadata.create_all(bind=engine)

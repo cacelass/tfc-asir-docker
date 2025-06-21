@@ -1,16 +1,16 @@
 #!/bin/bash
 set -e
 
-echo "Selecciona el sistema operativo:"
-echo "1) Linux"
-echo "2) Windows"
-read -rp "Introduce 1 o 2: " SO
+#echo "Selecciona el sistema operativo:"
+#echo "1) Linux"
+#echo "2) Windows"
+#read -rp "Introduce 1 o 2: " SO
 
 HOST_LINE="127.0.0.1 tfc.local"
 
-case "$SO" in
-  1)
-    echo "Has seleccionado Linux."
+#case "$SO" in
+#  1)
+#    echo "Has seleccionado Linux."
     # Añadir dominio local a /etc/hosts (Linux)
     if ! grep -qF "$HOST_LINE" /etc/hosts; then
       echo "$HOST_LINE" >> /etc/hosts
@@ -18,17 +18,17 @@ case "$SO" in
     else
       echo "La línea ya existe en /etc/hosts"
     fi
-    ;;
-  2)
-    echo "Has seleccionado Windows."
-    echo "Por favor, ejecuta el archivo start.ps1 desde PowerShell como administrador para continuar en Windows."
-    exit 0
-    ;;
-  *)
-    echo "Opción no válida. Debes introducir 1 o 2."
-    exit 1
-    ;;
-esac
+#    ;;
+#  2)
+#    echo "Has seleccionado Windows."
+#    echo "Por favor, ejecuta el archivo start.ps1 desde PowerShell como administrador para continuar en Windows."
+#    exit 0
+#    ;;
+#  *)
+#    echo "Opción no válida. Debes introducir 1 o 2."
+#    exit 1
+#    ;;
+#esac
 
 # Apagar y limpiar contenedores y volúmenes previos
 echo ">> Limpiando contenedores previos..."
@@ -40,13 +40,13 @@ docker compose up --build -d
 
 # Esperar a que MySQL esté healthy según healthcheck
 echo ">> Esperando a que MySQL esté completamente preparado..."
-for i in {1..60}; do
+for i in {1..90}; do
   STATUS="$(docker inspect --format='{{.State.Health.Status}}' $(docker compose ps -q mysql) 2>/dev/null || echo "starting")"
   if [ "$STATUS" == "healthy" ]; then
     echo "MySQL está healthy."
     break
   fi
-  echo "Esperando a que MySQL esté healthy... ($i/60) Estado actual: $STATUS"
+  echo "Esperando a que MySQL esté healthy... ($i/90) Estado actual: $STATUS"
   sleep 2
 done
 
@@ -88,5 +88,5 @@ echo "¡Todo levantado! Accede a:"
 echo "  http://tfc.local"
 
 echo "¡Para acceder a swagger acceda a:"
-echo "  http://tfc.local/8000"
+echo "  http://tfc.local/docs"
 
