@@ -7,6 +7,7 @@ from passlib.context import CryptContext
 from database import SessionLocal, UserDB
 import requests
 from datetime import date
+import unicodedata
 
 app = FastAPI()
 
@@ -67,6 +68,14 @@ ICONO_VENTO = {
     300: "Viento variable"
 }
 
+def normaliza(cad):
+    if not cad:
+        return ""
+    return ''.join(
+        c for c in unicodedata.normalize('NFD', cad)
+        if unicodedata.category(c) != 'Mn'
+    ).lower().strip()
+
 @app.get("/", response_class=HTMLResponse)
 async def root():
     return FileResponse("static/index.html")
@@ -101,6 +110,7 @@ def hola_mundo(
         return JSONResponse({
             "usuario": usuario,
             "provincia": "Desconocida",
+            "concello": "",
             "foto_perfil": "",
             "edad": "",
             "tiempo": "No disponible",
@@ -120,19 +130,23 @@ def hola_mundo(
         datos = resp.json()
         estaciones = datos.get("list", [])
 
-        # Búsqueda robusta: por provincia, luego por concello, luego fallback
         estacion = None
+        user_concello_norm = normaliza(user.concello)
+        provincia_user_norm = normaliza(provincia_user)
+        # 1. Busca por concello exacto, normalizado
         for e in estaciones:
-            if provincia_user.lower() == e.get("provincia", "").lower():
+            if user_concello_norm == normaliza(e.get("concello", "")):
                 estacion = e
                 break
+        # 2. Si no hay, busca por provincia normalizada
         if not estacion:
             for e in estaciones:
-                if provincia_user.lower() == e.get("concello", "").lower():
+                if provincia_user_norm == normaliza(e.get("provincia", "")):
                     estacion = e
                     break
+        # 3. Si no hay ninguna, coge la primera
         if not estacion and estaciones:
-            estacion = estaciones[0]  # fallback
+            estacion = estaciones[0]
 
         if estacion:
             temp = estacion.get("valorTemperatura", "No disponible")
@@ -166,6 +180,7 @@ def hola_mundo(
     return JSONResponse({
         "usuario": user.username,
         "provincia": nombre_provincia,
+        "concello": user.concello,
         "foto_perfil": foto_perfil,
         "edad": edad,
         "tiempo": tiempo_actual,

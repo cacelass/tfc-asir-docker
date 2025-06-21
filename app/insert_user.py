@@ -24,8 +24,8 @@ usuarios = [
     {
         "username": "user",
         "password": "abc123",
-        "provincia": "PONTEVEDRA",
-        "concello": "Tui",
+        "provincia": "Pontevedra",
+        "concello": "TUI",
         "foto_perfil": "foto_perfil.jpg",
         "edad": 25
     }
