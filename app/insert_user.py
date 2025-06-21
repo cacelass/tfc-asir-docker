@@ -10,7 +10,7 @@ usuarios = [
         "password": "abc123",
         "provincia": "PONTEVEDRA",
         "concello": "Vigo",
-        "foto_perfil": "foto_perfil.jpg",
+        "foto_perfil": "foto_perfil.png",
         "edad": 25
     },
     {
@@ -18,7 +18,7 @@ usuarios = [
         "password": "abc123",
         "provincia": "PONTEVEDRA",
         "concello": "Poio",
-        "foto_perfil": "foto_perfil.jpg",
+        "foto_perfil": "foto_perfil.png",
         "edad": 25
     },
     {
@@ -26,7 +26,7 @@ usuarios = [
         "password": "abc123",
         "provincia": "Pontevedra",
         "concello": "TUI",
-        "foto_perfil": "foto_perfil.jpg",
+        "foto_perfil": "foto_perfil.png",
         "edad": 25
     }
 ]

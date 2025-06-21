@@ -3,8 +3,14 @@ from fastapi import FastAPI, Form, Depends, Header, HTTPException, Request
 from fastapi.responses import HTMLResponse, FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
+# --- START: Cambios en imports para reintentos de DB y text ---
+from sqlalchemy.exc import OperationalError
+from sqlalchemy import text # <--- ¡Nueva importación necesaria!
+import time
+# --- END: Cambios en imports para reintentos de DB y text ---
+
 from passlib.context import CryptContext
-from database import SessionLocal, UserDB
+from database import SessionLocal, UserDB, engine # Asegúrate de que engine también se importa
 import requests
 from datetime import date
 import unicodedata
@@ -15,12 +21,36 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
+# --- START: Función get_db modificada con reintentos y text() ---
 def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+    db = None
+    retries = 5 # Número de intentos
+    delay = 3   # Segundos de espera entre intentos
+
+    for i in range(retries):
+        try:
+            db = SessionLocal() # Intenta crear la sesión
+            # Esto fuerza una conexión real al pool y verifica si el servidor MySQL está respondiendo
+            db.execute(text("SELECT 1")) # <--- ¡Corrección aplicada aquí!
+            print(f"DEBUG: Conexión a la base de datos establecida en intento {i+1}.")
+            yield db
+            break # Si la conexión fue exitosa y se rindió, sal del bucle
+        except OperationalError as e:
+            print(f"ERROR: No se pudo conectar a la base de datos (intento {i+1}/{retries}): {e}")
+            if i < retries - 1:
+                time.sleep(delay)
+            else:
+                # Si es el último intento y falla, levanta la excepción
+                print("ERROR: Fallo definitivo al conectar a la base de datos después de varios reintentos.")
+                raise HTTPException(status_code=503, detail="Servicio de base de datos no disponible.")
+        except Exception as e:
+            # Captura cualquier otra excepción inesperada durante la conexión
+            print(f"ERROR: Error inesperado al obtener la sesión de la base de datos: {e}")
+            raise HTTPException(status_code=500, detail="Error interno del servidor al conectar a la base de datos.")
+        finally:
+            if db:
+                db.close() # Asegúrate de cerrar la sesión, incluso si hubo un error antes del yield
+# --- END: Función get_db modificada con reintentos y text() ---
 
 # Diccionarios de traducción de códigos
 ICONO_CEO = {
@@ -98,8 +128,8 @@ async def login(request: Request, db: Session = Depends(get_db)):
 @app.get("/holamundo")
 def hola_mundo(
     autenticado: str = Header(""),
-    usuario: str = Header(None), 
-    db: Session = Depends(get_db)
+    usuario: str = Header(None),
+    db: Session = Depends(get_db) # Aquí usa la función get_db con reintentos
 ):
     if autenticado != "si":
         raise HTTPException(status_code=401, detail="No autenticado")
@@ -117,51 +147,77 @@ def hola_mundo(
             "bienvenida": "Bienvenidos al TFC de Alejandro Cancelas",
             "meteo": {}
         }, headers={"Content-Type": "application/json; charset=utf-8"})
+
     provincia_user = user.provincia or "Desconocida"
     foto_perfil = user.foto_perfil or ""
+    # Construye la URL de la foto de perfil. Si user.foto_perfil es una cadena vacía, foto_perfil también lo será.
     foto_perfil = f"/static/fotos/{user.foto_perfil}" if user.foto_perfil else ""
+
     edad = user.edad if user.edad is not None else ""
-    tiempo_actual = "No disponible"
+    tiempo_actual = "No disponible" # Valor por defecto si no se puede obtener la meteo
     nombre_provincia = provincia_user
     meteo = {}
+
     try:
+        # --- DEBUG: Comprobar la respuesta de Meteogalicia API ---
+        print("\n--- Iniciando petición a Meteogalicia ---")
         resp = requests.get("https://servizos.meteogalicia.gal/mgrss/observacion/estadoEstacionsMeteo.action")
-        resp.encoding = 'utf-8'
+        print(f"Estado de la respuesta de Meteogalicia: {resp.status_code}")
+        resp.encoding = 'utf-8' # Asegurarse de que la codificación sea correcta
         datos = resp.json()
-        estaciones = datos.get("list", [])
+        print(f"JSON recibido de Meteogalicia: {datos}") # Descomenta si quieres ver todo el JSON de Meteogalicia
+        print("--- Fin de petición a Meteogalicia ---")
+        # ---------------------------------------------------------
+
+        estaciones = datos.get("listEstadoActual", [])
+        print(f"Número de estaciones recibidas de Meteogalicia: {len(estaciones)}")
 
         estacion = None
         user_concello_norm = normaliza(user.concello)
         provincia_user_norm = normaliza(provincia_user)
+
+        print(f"Usuario -> Concello normalizado: '{user_concello_norm}', Provincia normalizada: '{provincia_user_norm}'")
+
         # 1. Busca por concello exacto, normalizado
         for e in estaciones:
-            if user_concello_norm == normaliza(e.get("concello", "")):
+            if user_concello_norm and user_concello_norm == normaliza(e.get("concello", "")):
                 estacion = e
+                print(f"Estación encontrada por concello: {estacion.get('concello')}")
                 break
-        # 2. Si no hay, busca por provincia normalizada
+        # 2. Si no hay, busca por provincia normalizada (solo si no se encontró por concello)
         if not estacion:
             for e in estaciones:
-                if provincia_user_norm == normaliza(e.get("provincia", "")):
+                if provincia_user_norm and provincia_user_norm == normaliza(e.get("provincia", "")):
                     estacion = e
+                    print(f"Estación encontrada por provincia: {estacion.get('provincia')}")
                     break
-        # 3. Si no hay ninguna, coge la primera
+        # 3. Si no hay ninguna, coge la primera disponible (si hay alguna)
         if not estacion and estaciones:
             estacion = estaciones[0]
+            print(f"Ninguna estación específica, tomando la primera: {estacion.get('concello', 'N/A')}")
+
 
         if estacion:
+            # --- DEBUG: Datos de la estación encontrada ---
+            print(f"Datos de la estación final seleccionada (resumen): Concello={estacion.get('concello')}, Temperatura={estacion.get('valorTemperatura')}")
+            # ---------------------------------------------
             temp = estacion.get("valorTemperatura", "No disponible")
             sensacion = estacion.get("valorSensTermica", "No disponible")
             ln_icono_ceo = estacion.get("lnIconoCeo", -9999)
             ln_icono_temp = estacion.get("lnIconoTemperatura", -9999)
             ln_icono_vento = estacion.get("lnIconoVento", -9999)
+
             estado_cielo = ICONO_CEO.get(ln_icono_ceo, "Desconocido")
             tendencia = ICONO_TEMP.get(ln_icono_temp, "Desconocido")
             viento = ICONO_VENTO.get(ln_icono_vento, "Desconocido")
-            concello = estacion.get("concello", "")
-            provincia = estacion.get("provincia", provincia_user)
+
+            concello_meteo = estacion.get("concello", "") # Concello de la estación meteo
+            provincia_meteo = estacion.get("provincia", provincia_user) # Provincia de la estación meteo
             fecha = estacion.get("dataLocal", "")
+
             tiempo_actual = f"{temp}ºC (Sensación: {sensacion}ºC), {estado_cielo}, {tendencia}, Viento: {viento} [{fecha}]"
-            nombre_provincia = provincia
+            nombre_provincia = provincia_meteo # Actualizar con la provincia de la estación meteo
+
             meteo = {
                 "temperatura": temp,
                 "sensacion_termica": sensacion,
@@ -172,15 +228,24 @@ def hola_mundo(
                 "viento": viento,
                 "viento_icono": ln_icono_vento,
                 "fecha": fecha,
-                "concello": concello,
-                "provincia": provincia
+                "concello": concello_meteo,
+                "provincia": provincia_meteo
             }
-    except Exception:
-        pass
+        else:
+            print("AVISO: No se pudo encontrar una estación meteorológica para el usuario o su provincia.")
+
+    except requests.exceptions.RequestException as e:
+        print(f"ERROR: No se pudo conectar a la API de Meteogalicia: {e}")
+    except ValueError as e:
+        # Esto ocurre si resp.json() falla porque la respuesta no es un JSON válido
+        print(f"ERROR: Error al parsear JSON de Meteogalicia: {e}. Contenido de la respuesta (si disponible): {resp.text if 'resp' in locals() else 'No disponible'}")
+    except Exception as e:
+        print(f"ERROR inesperado al procesar Meteogalicia: {e}")
+
     return JSONResponse({
         "usuario": user.username,
         "provincia": nombre_provincia,
-        "concello": user.concello,
+        "concello": user.concello, # Devuelve el concello del usuario, no el de la estación meteo
         "foto_perfil": foto_perfil,
         "edad": edad,
         "tiempo": tiempo_actual,
