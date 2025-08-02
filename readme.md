@@ -49,8 +49,8 @@ Este proyecto demuestra el desarrollo de una aplicación web en Python utilizand
 ### 1. Clonar el repositorio
 
 ```bash
-git clone https://github.com/tu-usuario/proyecto-fastapi.git
-cd proyecto-fastapi
+git clone https://github.com/cacelass/tfc-asir-docker.git
+cd tfc-asir-docker
 ```
 
 ### 2. Dar permisos y ejecutar script 
